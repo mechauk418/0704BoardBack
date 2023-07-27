@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
-app_name = 'articles'
+app_name = 'article'
 
 urlpatterns =[
     path("<int:article_pk>/comment/", views.CommentView.as_view({"post": "create", "get": "list"})),

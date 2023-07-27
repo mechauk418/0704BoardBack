@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.kakao',
     "corsheaders",
     'django_filters',
-
 ]
 
 MIDDLEWARE = [

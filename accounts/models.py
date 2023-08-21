@@ -38,6 +38,13 @@ class UserManager(BaseUserManager):
 
         return user
     
+team_list = (
+        ('경영팀','경영팀'),
+        ('고객대응팀','고객대응팀'),
+        ('기술지원팀','기술지원팀'),
+        ('전략기획팀','전략기획팀'),
+        ('소속없음','소속없음'),
+    )
 
 
 class USER(AbstractBaseUser, PermissionsMixin):
@@ -53,7 +60,7 @@ class USER(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-
+    team = models.CharField(max_length=80, choices=team_list, default='소속없음')
     
     def __str__(self):
         return self.email

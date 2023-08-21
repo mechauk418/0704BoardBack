@@ -8,9 +8,12 @@ class MyAccountAdapter(DefaultAccountAdapter):
         user = super().save_user(request,user,form,False)
         nickname = data.get('nickname')
         realname = data.get('realname')
+        team = data.get('team')
         if nickname:
             user.nickname = nickname
         if realname:
             user.realname = realname
+        if team:
+            user.team = team
         user.save()
         return super().save_user(request, user, form, commit)

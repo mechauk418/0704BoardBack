@@ -4,13 +4,16 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from allauth.account.adapter import get_adapter
 from dj_rest_auth.serializers import LoginSerializer
 
+
+
+
 class SignUpSerializer(serializers.ModelSerializer):
     password = serializers.CharField(style = {'input_type':'password'})
     password2 = serializers.CharField(style = {'input_type':'password'})
 
     class Meta:
         model = USER
-        fields = ['email','nickname','realname','password','password2']
+        fields = ['email','nickname','realname','team','password','password2']
         extra_kwargs = {
             'password': {
                 'write_only':True
@@ -22,6 +25,7 @@ class SignUpSerializer(serializers.ModelSerializer):
             email = self.validated_data['email'],
             nickname = self.validated_data['nickname'],
             realname = self.validated_data['realname'],
+            team = self.validated_data['team'],
         )
 
         password = self.validated_data['password']
@@ -38,7 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = USER
-        fields = ['id','email','nickname','realname']
+        fields = ['id','email','nickname','realname','team']
 
 
 # class CSLoginSerializer(LoginSerializer):

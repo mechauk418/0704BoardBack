@@ -45,12 +45,15 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'accounts',
     'article',
+    'todo',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.kakao',
     "corsheaders",
     'django_filters',
+    'character',
+    'gamerecord'
 ]
 
 MIDDLEWARE = [
@@ -240,7 +243,7 @@ CSRF_TRUSTED_ORIGINS = [
 CSRF_COOKIE_SAMESITE='Lax'
 CSRF_COOKIE_HTTPONLY =True
 
-# ACCOUNT_ADAPTER = 'accounts.adapter.MyAccountAdapter'
+ACCOUNT_ADAPTER = 'accounts.adapter.MyAccountAdapter'
 
 
 MEDIA_URL = '/media/'

@@ -26,6 +26,9 @@ urlpatterns = [
     path('accounts/registration/', include('dj_rest_auth.registration.urls')),
     path('accounts/', include('accounts.urls')),
     path('article/', include('article.urls')),
+    path("todo/", include("todo.urls")),
+    path("character/", include("character.urls")),
+    path("gamerecord/", include("gamerecord.urls")),
 ]
 
 if settings.DEBUG:

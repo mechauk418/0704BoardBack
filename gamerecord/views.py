@@ -4,7 +4,7 @@ from .serializers import *
 from rest_framework.viewsets import ModelViewSet
 # Create your views here.
 import requests
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 def getusernum(request,nickname):
     print(nickname)
@@ -23,9 +23,32 @@ def getusernum(request,nickname):
     )
     match = match.json()
     matchdetail = match['userGames']
-    
+    print(type(match))
+    print(matchdetail[0]['gameId'])
 
-    return JsonResponse(match)
+    for game in matchdetail:
+        print(game['gameId'])
+
+        try:
+            gameid = record.objects.get(gamenumber = game['gameId'])
+            continue
+
+        except:
+            gamepost = requests.get(
+                f'https://open-api.bser.io/v1/games/{game["gameId"]}',
+                headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+            ).json()
+
+            record(
+
+                gamenuber = gameid
+                
+
+            ).save()
+
+
+
+    return HttpResponse(matchdetail)
 
 def getuserrecord(request):
 

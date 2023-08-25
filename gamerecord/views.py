@@ -130,9 +130,18 @@ def getuserRecord(request):
 
 class RecordView(ModelViewSet):
 
-    def retrieve(self, request, *args, **kwargs):
+    queryset = Record.objects.all().order_by('pk')
+    serializer_class = RecordSerializer
 
-        return super().retrieve(request, *args, **kwargs)
+    def list(self, request, nickname):
+        print(nickname)
+        
+        queryset = Record.objects.filter(user = 1)
+        serializer_class = RecordSerializer
+
+        return super().list(request, nickname)
+
+
 
 
 

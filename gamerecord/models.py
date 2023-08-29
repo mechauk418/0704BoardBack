@@ -31,7 +31,8 @@ class Record(models.Model):
     playerkill = models.IntegerField()
     playerAss = models.IntegerField()
     mosterkill = models.IntegerField()
-
+    startDtm = models.DateTimeField()
+    mmrGain = models.IntegerField()
 
 
     

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_list_or_404
 from .models import *
 from .serializers import *
 from rest_framework.viewsets import ModelViewSet
@@ -6,6 +6,8 @@ from rest_framework.viewsets import ModelViewSet
 import requests
 from django.http import JsonResponse, HttpResponse
 import time
+from rest_framework.response import Response
+from datetime import datetime, timedelta
 
 def getusernum(request,nickname):
 
@@ -38,7 +40,7 @@ def getusernum(request,nickname):
             winrate = round((userstats['totalWins']*100 / userstats['totalGames']),1),
             averageKills = userstats['averageKills'],
         )
-        
+
 
     # 유저 넘버로 유저의 최근 90일 내의 전적을 모두 가져옴
     match = requests.get(
@@ -48,18 +50,28 @@ def getusernum(request,nickname):
     match = match.json()
     matchdetail = match['userGames']
 
+    now_time = datetime.now()
 
 
+    # 가져온 전적을 등록하는 과정
     for game in matchdetail:
-        time.sleep(3)
+        time.sleep(2)
         print(game['gameId'])
+        t = game['startDtm']
+        gametime = datetime(int(t[0:4]),int(t[5:7]),int(t[8:10]), int(t[11:13]), int(t[14:16]), int(t[17:19])  )
 
         if len(Record.objects.filter(gamenumber = game['gameId'])):
         
             continue
 
+        elif game['matchingMode'] !=3:
+
+            continue
+
+        elif (now_time - gametime).days >= 7:
+            break
+
         else:
-            print('except')
 
             gamepost = requests.get(
                 f'https://open-api.bser.io/v1/games/{game["gameId"]}',
@@ -67,10 +79,10 @@ def getusernum(request,nickname):
             )
             gamepost = gamepost.json()
             time.sleep(2)
-            print(gamepost)
 
             for g in gamepost['userGames']:
-                time.sleep(2)
+                if g['matchingMode'] !=3:
+                    continue
 
                 print(g['userNum'])
                 print(g['nickname'])
@@ -86,7 +98,9 @@ def getusernum(request,nickname):
                         gamerank = game['gameRank'],
                         playerkill = game['playerKill'],
                         playerAss = game['playerAssistant'],
-                        mosterkill = game['monsterKill']
+                        mosterkill = game['monsterKill'],
+                        startDtm = game['startDtm'],
+                        mmrGain = game['mmrGain']
                     )
 
                 except:
@@ -114,12 +128,115 @@ def getusernum(request,nickname):
                             gamerank = game['gameRank'],
                             playerkill = game['playerKill'],
                             playerAss = game['playerAssistant'],
-                            mosterkill = game['monsterKill']
+                            mosterkill = game['monsterKill'],
+                            startDtm = game['startDtm'],
+                            mmrGain = game['mmrGain']
                         )
 
 
+    if 'next' in match:
+        next_number = match['next']
+
+        while True:
+
+
+            match = requests.get(
+                f'https://open-api.bser.io/v1/user/games/{userNum}?next={next_number}',
+                headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+            )
+            match = match.json()
+            matchdetail = match['userGames']
+
+            # 가져온 전적을 등록하는 과정
+            for game in matchdetail:
+                time.sleep(2)
+                print(game['gameId'])
+                t = game['startDtm']
+                gametime = datetime(int(t[0:4]),int(t[5:7]),int(t[8:10]), int(t[11:13]), int(t[14:16]), int(t[17:19])  )
+
+                if len(Record.objects.filter(gamenumber = game['gameId'])):
+                
+                    continue
+
+                elif game['matchingMode'] !=3:
+                    continue
+
+                elif (now_time - gametime).days >= 7:
+                    break
+
+                else:
+                    print('except')
+
+                    gamepost = requests.get(
+                        f'https://open-api.bser.io/v1/games/{game["gameId"]}',
+                        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+                    )
+                    gamepost = gamepost.json()
+                    time.sleep(2)
+                    print(gamepost)
+
+                    for g in gamepost['userGames']:
+                        if g['matchingMode'] ==2:
+                            continue
+
+                        print(g['userNum'])
+                        print(g['nickname'])
+
+                        try:
+                            temt = Gameuser.objects.get(nickname = g['nickname'])
+                            gameid = Record.objects.create(
+                                gamenumber = game['gameId'],
+                                user = temt,
+                                character = game['characterNum'],
+                                beforemmr = game['mmrBefore'],
+                                aftermmr = game['mmrAfter'],
+                                gamerank = game['gameRank'],
+                                playerkill = game['playerKill'],
+                                playerAss = game['playerAssistant'],
+                                mosterkill = game['monsterKill'],
+                                startDtm = game['startDtm'],
+                                mmrGain = game['mmrGain']
+                            )
+
+                        except:
+                                time.sleep(1)
+                                anotheruser = requests.get(
+                                    f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
+                                    headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+                                ).json()['userStats'][0]
+
+                                temt = Gameuser.objects.create(
+                                    userNum = anotheruser['userNum'],
+                                    mmr = anotheruser['mmr'],
+                                    nickname = anotheruser['nickname'],
+                                    rank = anotheruser['rank'],
+                                    totalGames = anotheruser['totalGames'],
+                                    winrate = round((anotheruser['totalWins']*100 / anotheruser['totalGames']),1),
+                                    averageKills = anotheruser['averageKills'],
+                                )
+                                gameid = Record.objects.create(
+                                    gamenumber = game['gameId'],
+                                    user = temt,
+                                    character = game['characterNum'],
+                                    beforemmr = game['mmrBefore'],
+                                    aftermmr = game['mmrAfter'],
+                                    gamerank = game['gameRank'],
+                                    playerkill = game['playerKill'],
+                                    playerAss = game['playerAssistant'],
+                                    mosterkill = game['monsterKill'],
+                                    startDtm = game['startDtm'],
+                                    mmrGain = game['mmrGain']
+                                )
+
+
+            if 'next' in match:
+                next_number = match['next']
+            else:
+                break
+
 
     return JsonResponse(gamepost)
+
 
 def getuserRecord(request):
 
@@ -130,16 +247,16 @@ def getuserRecord(request):
 
 class RecordView(ModelViewSet):
 
-    queryset = Record.objects.all().order_by('pk')
+    def get_queryset(self, *args,**kwargs):
+        print(self.kwargs.get('nickname'))
+        usnum = Gameuser.objects.get(nickname = self.kwargs.get('nickname'))
+
+        qs = Record.objects.filter(user=usnum)
+
+        return qs
+
     serializer_class = RecordSerializer
 
-    def list(self, request, nickname):
-        print(nickname)
-        
-        queryset = Record.objects.filter(user = 1)
-        serializer_class = RecordSerializer
-
-        return super().list(request, nickname)
 
 
 
@@ -171,3 +288,11 @@ def refreshuser(request,nickname):
         winrate = round((userstats['totalWins']*100 / userstats['totalGames']),1),
         averageKills = userstats['averageKills'],
     )
+
+
+class UserDetailView(ModelViewSet):
+
+    queryset = Gameuser.objects.all()
+    serializer_class = GameuserSerializer
+    lookup_field = 'nickname'
+

@@ -1,9 +1,26 @@
 
 from .models import *
 from rest_framework import serializers
+from character.models import Character
 
 
 class GameDetailSerializer(serializers.ModelSerializer):
+
+
+    playcharacter = serializers.SerializerMethodField()
+
+    def get_playcharacter(self,obj):
+        ch = Character.objects.get(id=obj.character)
+        
+        return ch.name
+    
+    usernickname = serializers.SerializerMethodField()
+
+
+    def get_usernickname(self,obj):
+        nick = Gameuser.objects.get(id=obj.user.id)
+        
+        return nick.nickname
 
     class Meta:
         model = Record
@@ -19,20 +36,26 @@ class GameuserSerializer(serializers.ModelSerializer):
 class RecordSerializer(serializers.ModelSerializer):
 
     gamedetail = serializers.SerializerMethodField()
+    
+    playcharacter = serializers.SerializerMethodField()
 
-    nowuserstats = serializers.SerializerMethodField()
+    def get_playcharacter(self,obj):
+        ch = Character.objects.get(id=obj.character)
+        
+        return ch.name
 
     def get_gamedetail(self,obj):
-        data = Record.objects.filter(gamenumber = obj.gamenumber)
+        data = Record.objects.filter(gamenumber = obj.gamenumber).order_by('gamerank')
 
         return GameDetailSerializer(instance=data, many=True, context = self.context).data
 
-    def get_nowuserstats(self,obj):
+    usernickname = serializers.SerializerMethodField()
 
-        data = Gameuser.objects.filter(nickname = obj.user.nickname)
-        print('data',data)
 
-        return GameuserSerializer(instance=data, many=True, context = self.context).data
+    def get_usernickname(self,obj):
+        nick = Gameuser.objects.get(id=obj.user.id)
+        
+        return nick.nickname
 
 
     class Meta:

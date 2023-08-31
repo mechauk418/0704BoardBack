@@ -7,7 +7,10 @@ import requests
 from django.http import JsonResponse, HttpResponse
 import time
 from rest_framework.response import Response
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+from rest_framework.pagination import PageNumberPagination
+from collections import defaultdict
+from character.models import Character
 
 def getusernum(request,nickname):
 
@@ -92,19 +95,19 @@ def getusernum(request,nickname):
                     gameid = Record.objects.create(
                         gamenumber = game['gameId'],
                         user = temt,
-                        character = game['characterNum'],
-                        beforemmr = game['mmrBefore'],
-                        aftermmr = game['mmrAfter'],
-                        gamerank = game['gameRank'],
-                        playerkill = game['playerKill'],
-                        playerAss = game['playerAssistant'],
-                        mosterkill = game['monsterKill'],
-                        startDtm = game['startDtm'],
-                        mmrGain = game['mmrGain']
+                        character = g['characterNum'],
+                        beforemmr = g['mmrBefore'],
+                        aftermmr = g['mmrAfter'],
+                        gamerank = g['gameRank'],
+                        playerkill = g['playerKill'],
+                        playerAss = g['playerAssistant'],
+                        mosterkill = g['monsterKill'],
+                        startDtm = g['startDtm'],
+                        mmrGain = g['mmrGain']
                     )
 
                 except:
-                        time.sleep(1)
+                        time.sleep(2)
                         anotheruser = requests.get(
                             f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
                             headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
@@ -122,15 +125,15 @@ def getusernum(request,nickname):
                         gameid = Record.objects.create(
                             gamenumber = game['gameId'],
                             user = temt,
-                            character = game['characterNum'],
-                            beforemmr = game['mmrBefore'],
-                            aftermmr = game['mmrAfter'],
-                            gamerank = game['gameRank'],
-                            playerkill = game['playerKill'],
-                            playerAss = game['playerAssistant'],
-                            mosterkill = game['monsterKill'],
-                            startDtm = game['startDtm'],
-                            mmrGain = game['mmrGain']
+                            character = g['characterNum'],
+                            beforemmr = g['mmrBefore'],
+                            aftermmr = g['mmrAfter'],
+                            gamerank = g['gameRank'],
+                            playerkill = g['playerKill'],
+                            playerAss = g['playerAssistant'],
+                            mosterkill = g['monsterKill'],
+                            startDtm = g['startDtm'],
+                            mmrGain = g['mmrGain']
                         )
 
 
@@ -139,6 +142,7 @@ def getusernum(request,nickname):
 
         while True:
 
+            days_check = False
 
             match = requests.get(
                 f'https://open-api.bser.io/v1/user/games/{userNum}?next={next_number}',
@@ -162,6 +166,7 @@ def getusernum(request,nickname):
                     continue
 
                 elif (now_time - gametime).days >= 7:
+                    days_check = True
                     break
 
                 else:
@@ -187,15 +192,15 @@ def getusernum(request,nickname):
                             gameid = Record.objects.create(
                                 gamenumber = game['gameId'],
                                 user = temt,
-                                character = game['characterNum'],
-                                beforemmr = game['mmrBefore'],
-                                aftermmr = game['mmrAfter'],
-                                gamerank = game['gameRank'],
-                                playerkill = game['playerKill'],
-                                playerAss = game['playerAssistant'],
-                                mosterkill = game['monsterKill'],
-                                startDtm = game['startDtm'],
-                                mmrGain = game['mmrGain']
+                                character = g['characterNum'],
+                                beforemmr = g['mmrBefore'],
+                                aftermmr = g['mmrAfter'],
+                                gamerank = g['gameRank'],
+                                playerkill = g['playerKill'],
+                                playerAss = g['playerAssistant'],
+                                mosterkill = g['monsterKill'],
+                                startDtm = g['startDtm'],
+                                mmrGain = g['mmrGain']
                             )
 
                         except:
@@ -217,17 +222,20 @@ def getusernum(request,nickname):
                                 gameid = Record.objects.create(
                                     gamenumber = game['gameId'],
                                     user = temt,
-                                    character = game['characterNum'],
-                                    beforemmr = game['mmrBefore'],
-                                    aftermmr = game['mmrAfter'],
-                                    gamerank = game['gameRank'],
-                                    playerkill = game['playerKill'],
-                                    playerAss = game['playerAssistant'],
-                                    mosterkill = game['monsterKill'],
-                                    startDtm = game['startDtm'],
-                                    mmrGain = game['mmrGain']
+                                    character = g['characterNum'],
+                                    beforemmr = g['mmrBefore'],
+                                    aftermmr = g['mmrAfter'],
+                                    gamerank = g['gameRank'],
+                                    playerkill = g['playerKill'],
+                                    playerAss = g['playerAssistant'],
+                                    mosterkill = g['monsterKill'],
+                                    startDtm = g['startDtm'],
+                                    mmrGain = g['mmrGain']
                                 )
 
+            # 7일이 넘은 기록부터는 가져오지 않음
+            if days_check:
+                break
 
             if 'next' in match:
                 next_number = match['next']
@@ -235,7 +243,7 @@ def getusernum(request,nickname):
                 break
 
 
-    return JsonResponse(gamepost)
+    return JsonResponse(test_json)
 
 
 def getuserRecord(request):
@@ -244,8 +252,12 @@ def getuserRecord(request):
 
     return
 
+class RecordPage(PageNumberPagination):
+    page_size = 10
+
 
 class RecordView(ModelViewSet):
+    pagination_class = RecordPage
 
     def get_queryset(self, *args,**kwargs):
         print(self.kwargs.get('nickname'))
@@ -295,4 +307,21 @@ class UserDetailView(ModelViewSet):
     queryset = Gameuser.objects.all()
     serializer_class = GameuserSerializer
     lookup_field = 'nickname'
+
+
+
+def recentgainrp(request,nickname):
+    
+    ch_dict = defaultdict(int)
+    ch_list = []
+    userid = Gameuser.objects.get(nickname = nickname)
+    userrecord = Record.objects.filter(user = userid, startDtm__range=[date.today()-timedelta(days=3),date.today()])
+
+    for g in userrecord:
+        chname = Character.objects.get(id=g.character).name
+        ch_dict[chname]+=g.mmrGain
+
+    print(ch_dict)
+
+    return JsonResponse(ch_dict)
 

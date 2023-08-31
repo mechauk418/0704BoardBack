@@ -10,4 +10,6 @@ urlpatterns = [
     path("getsearch/<str:nickname>/", RecordView.as_view({'get':'list'})),
     path("getdetail/<str:nickname>/", UserDetailView.as_view({'get':'retrieve'})),
     path("getdetail/", UserDetailView.as_view({'get':'list'})),
+    path("recentgainrp/<str:nickname>/", recentgainrp),
+
 ]

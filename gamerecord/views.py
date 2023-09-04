@@ -71,7 +71,7 @@ def getusernum(request,nickname):
 
             continue
 
-        elif (now_time - gametime).days >= 7:
+        elif (now_time - gametime).days >= 14:
             break
 
         else:
@@ -81,8 +81,8 @@ def getusernum(request,nickname):
                 headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
             )
             gamepost = gamepost.json()
-            time.sleep(2)
-
+            time.sleep(3)
+            print(gamepost)
             for g in gamepost['userGames']:
                 if g['matchingMode'] !=3:
                     continue
@@ -159,13 +159,13 @@ def getusernum(request,nickname):
                 gametime = datetime(int(t[0:4]),int(t[5:7]),int(t[8:10]), int(t[11:13]), int(t[14:16]), int(t[17:19])  )
 
                 if len(Record.objects.filter(gamenumber = game['gameId'])):
-                
+                    
                     continue
 
                 elif game['matchingMode'] !=3:
                     continue
 
-                elif (now_time - gametime).days >= 7:
+                elif (now_time - gametime).days >= 14:
                     days_check = True
                     break
 
@@ -243,7 +243,7 @@ def getusernum(request,nickname):
                 break
 
 
-    return JsonResponse(test_json)
+    return HttpResponse('dtd')
 
 
 def getuserRecord(request):
@@ -260,10 +260,13 @@ class RecordView(ModelViewSet):
     pagination_class = RecordPage
 
     def get_queryset(self, *args,**kwargs):
+        
+        # getusernum(self.kwargs.get('nickname'))
+
         print(self.kwargs.get('nickname'))
         usnum = Gameuser.objects.get(nickname = self.kwargs.get('nickname'))
 
-        qs = Record.objects.filter(user=usnum)
+        qs = Record.objects.filter(user=usnum).order_by('-gamenumber')
 
         return qs
 
@@ -291,15 +294,15 @@ def refreshuser(request,nickname):
     ).json()['userStats'][0]
     print(userstats)
 
-    Gameuser.objects.update(
-        userNum = userstats['userNum'],
+    te = Gameuser.objects.filter(userNum = userstats['userNum']).update(
         mmr = userstats['mmr'],
-        nickname = userstats['nickname'],
         rank = userstats['rank'],
         totalGames = userstats['totalGames'],
         winrate = round((userstats['totalWins']*100 / userstats['totalGames']),1),
         averageKills = userstats['averageKills'],
     )
+
+    return HttpResponse('dtd')
 
 
 class UserDetailView(ModelViewSet):
@@ -315,7 +318,7 @@ def recentgainrp(request,nickname):
     ch_dict = defaultdict(int)
     ch_list = []
     userid = Gameuser.objects.get(nickname = nickname)
-    userrecord = Record.objects.filter(user = userid, startDtm__range=[date.today()-timedelta(days=3),date.today()])
+    userrecord = Record.objects.filter(user = userid, startDtm__range=[date.today()-timedelta(days=14),date.today()])
 
     for g in userrecord:
         chname = Character.objects.get(id=g.character).name

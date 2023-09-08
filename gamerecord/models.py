@@ -13,6 +13,7 @@ class Gameuser(models.Model):
     totalGames = models.IntegerField()
     winrate = models.DecimalField(max_digits=6, decimal_places=1)
     averageKills = models.DecimalField(max_digits=6, decimal_places=2)
+    updatedate = models.DateTimeField(null=True, blank=True)
 
     def __str__(self) -> str:
         return self.nickname

@@ -11,29 +11,64 @@ from datetime import datetime, timedelta, date
 from rest_framework.pagination import PageNumberPagination
 from collections import defaultdict
 from character.models import Character
+from django.utils import timezone
 
-def getusernum(request,nickname):
 
-    # 유저 닉네임으로 유저 정보 받아옴
-    print(nickname)
+# 현재 한국 시간 aware 설정
+now_time = timezone.localtime(timezone.now())
+
+
+def refreshuser(nickname):
+    time.sleep(0.02)
     userNum = requests.get(
         f'https://open-api.bser.io/v1/user/nickname?query={nickname}',
-        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
     )
     test_json = userNum.json()
     userNum = test_json['user']['userNum']
     
-    print(userNum) 
-
-
-    # 유저의 이번 시즌 정보를 받아옴, 19는 정규시즌1 번호
+    print(userNum) # 유저 닉네임으로 유저 정보 받아옴
+    time.sleep(0.02)
     userstats = requests.get(
         f'https://open-api.bser.io/v1/user/stats/{userNum}/19',
-        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+    ).json()['userStats'][0]
+
+    te = Gameuser.objects.get(userNum = userstats['userNum'])
+    te.mmr = userstats['mmr']
+    te.rank = userstats['rank']
+    te.totalGames = userstats['totalGames']
+    te.winrate = round((userstats['totalWins']*100 / userstats['totalGames']),1)
+    te.averageKills = userstats['averageKills']
+    te.save()
+
+    return HttpResponse('refresh')
+
+def getusernum(nickname):
+    sttime = time.time()
+    # 유저 닉네임으로 유저 정보 받아옴
+    print(nickname)
+    time.sleep(0.02)
+    userNum = requests.get(
+        f'https://open-api.bser.io/v1/user/nickname?query={nickname}',
+        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+    )
+    test_json = userNum.json()
+    userNum = test_json['user']['userNum']
+    
+    print(userNum)
+    
+
+    # 유저의 이번 시즌 정보를 받아옴, 19는 정규시즌1 번호
+    time.sleep(0.02)
+    userstats = requests.get(
+        f'https://open-api.bser.io/v1/user/stats/{userNum}/19',
+        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
     ).json()['userStats'][0]
 
     # 처음 검색해서 DB에 유저가 없음
     if not Gameuser.objects.filter(nickname = userstats['nickname']):
+        utc_ = timedelta(hours=9)
         Gameuser.objects.create(
             userNum = userstats['userNum'],
             mmr = userstats['mmr'],
@@ -43,26 +78,25 @@ def getusernum(request,nickname):
             winrate = round((userstats['totalWins']*100 / userstats['totalGames']),1),
             averageKills = userstats['averageKills'],
         )
+    
+    refreshuser(nickname)
 
+    search_user = Gameuser.objects.get(nickname = nickname)
 
     # 유저 넘버로 유저의 최근 90일 내의 전적을 모두 가져옴
+    time.sleep(0.02)
     match = requests.get(
         f'https://open-api.bser.io/v1/user/games/{userNum}',
-        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
-    )
-    match = match.json()
+        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+    ).json()
     matchdetail = match['userGames']
-
-    now_time = datetime.now()
-
-
+    
     # 가져온 전적을 등록하는 과정
     for game in matchdetail:
-        time.sleep(2)
         print(game['gameId'])
         t = game['startDtm']
-        gametime = datetime(int(t[0:4]),int(t[5:7]),int(t[8:10]), int(t[11:13]), int(t[14:16]), int(t[17:19])  )
-
+        gametime = datetime(int(t[0:4]),int(t[5:7]),int(t[8:10]), int(t[11:13]), int(t[14:16]), int(t[17:19]))
+        gametime_aware = timezone.make_aware(gametime)
         if len(Record.objects.filter(gamenumber = game['gameId'])):
         
             continue
@@ -71,19 +105,26 @@ def getusernum(request,nickname):
 
             continue
 
-        elif (now_time - gametime).days >= 14:
+        elif (now_time - gametime_aware).days >= 14:
             break
 
         else:
-
+            time.sleep(0.02)
             gamepost = requests.get(
                 f'https://open-api.bser.io/v1/games/{game["gameId"]}',
-                headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+                headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
             )
             gamepost = gamepost.json()
-            time.sleep(3)
-            print(gamepost)
+            # if 'userGames' not in gamepost:
+            #                    gamepost = requests.get(
+            #     f'https://open-api.bser.io/v1/games/{game["gameId"]}',
+            #     headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+            #     ).json()
+            
+
             for g in gamepost['userGames']:
+                
+
                 if g['matchingMode'] !=3:
                     continue
 
@@ -107,34 +148,42 @@ def getusernum(request,nickname):
                     )
 
                 except:
-                        time.sleep(2)
-                        anotheruser = requests.get(
-                            f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
-                            headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
-                        ).json()['userStats'][0]
+                    time.sleep(0.02)
+                    anotheruser = requests.get(
+                        f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
+                        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+                    ).json()
+                    print(anotheruser)
+                    # if 'userStats' not in anotheruser:
+                    #                            anotheruser = requests.get(
+                    #     f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
+                    #     headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}).json()
+                    #     anotheruser = anotheruser['userStats'][0]
+                    # else:
+                    anotheruser = anotheruser['userStats'][0]
 
-                        temt = Gameuser.objects.create(
-                            userNum = anotheruser['userNum'],
-                            mmr = anotheruser['mmr'],
-                            nickname = anotheruser['nickname'],
-                            rank = anotheruser['rank'],
-                            totalGames = anotheruser['totalGames'],
-                            winrate = round((anotheruser['totalWins']*100 / anotheruser['totalGames']),1),
-                            averageKills = anotheruser['averageKills'],
-                        )
-                        gameid = Record.objects.create(
-                            gamenumber = game['gameId'],
-                            user = temt,
-                            character = g['characterNum'],
-                            beforemmr = g['mmrBefore'],
-                            aftermmr = g['mmrAfter'],
-                            gamerank = g['gameRank'],
-                            playerkill = g['playerKill'],
-                            playerAss = g['playerAssistant'],
-                            mosterkill = g['monsterKill'],
-                            startDtm = g['startDtm'],
-                            mmrGain = g['mmrGain']
-                        )
+                    temt = Gameuser.objects.create(
+                        userNum = anotheruser['userNum'],
+                        mmr = anotheruser['mmr'],
+                        nickname = anotheruser['nickname'],
+                        rank = anotheruser['rank'],
+                        totalGames = anotheruser['totalGames'],
+                        winrate = round((anotheruser['totalWins']*100 / anotheruser['totalGames']),1),
+                        averageKills = anotheruser['averageKills'],
+                    )
+                    gameid = Record.objects.create(
+                        gamenumber = game['gameId'],
+                        user = temt,
+                        character = g['characterNum'],
+                        beforemmr = g['mmrBefore'],
+                        aftermmr = g['mmrAfter'],
+                        gamerank = g['gameRank'],
+                        playerkill = g['playerKill'],
+                        playerAss = g['playerAssistant'],
+                        mosterkill = g['monsterKill'],
+                        startDtm = g['startDtm'],
+                        mmrGain = g['mmrGain']
+                    )
 
 
     if 'next' in match:
@@ -143,20 +192,32 @@ def getusernum(request,nickname):
         while True:
 
             days_check = False
-
+            time.sleep(0.02)
             match = requests.get(
                 f'https://open-api.bser.io/v1/user/games/{userNum}?next={next_number}',
-                headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
-            )
+                headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'})
             match = match.json()
+            # while 'userGames' not in match:
+            #     match = requests.get(
+            #     f'https://open-api.bser.io/v1/user/games/{userNum}?next={next_number}',
+            #     headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}).json()
             matchdetail = match['userGames']
+            upt = matchdetail[0]['startDtm']
+            test_time = datetime(int(upt[0:4]),int(upt[5:7]),int(upt[8:10]), int(upt[11:13]), int(upt[14:16]), int(upt[17:19])  )
+            test_time_aware = timezone.make_aware(test_time)
+
+            if search_user.updatedate is not None and \
+                search_user.updatedate > test_time_aware:
+                break
+
 
             # 가져온 전적을 등록하는 과정
             for game in matchdetail:
-                time.sleep(2)
+                
                 print(game['gameId'])
                 t = game['startDtm']
                 gametime = datetime(int(t[0:4]),int(t[5:7]),int(t[8:10]), int(t[11:13]), int(t[14:16]), int(t[17:19])  )
+                gametime_aware = timezone.make_aware(gametime)
 
                 if len(Record.objects.filter(gamenumber = game['gameId'])):
                     
@@ -165,22 +226,26 @@ def getusernum(request,nickname):
                 elif game['matchingMode'] !=3:
                     continue
 
-                elif (now_time - gametime).days >= 14:
+                elif (now_time - gametime_aware).days >= 14:
                     days_check = True
                     break
 
                 else:
                     print('except')
-
+                    time.sleep(0.02)
                     gamepost = requests.get(
                         f'https://open-api.bser.io/v1/games/{game["gameId"]}',
-                        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+                        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
                     )
                     gamepost = gamepost.json()
-                    time.sleep(2)
-                    print(gamepost)
+                    # while 'userGames' not in gamepost:
+                    #                            gamepost = requests.get(
+                    #     f'https://open-api.bser.io/v1/games/{game["gameId"]}',
+                    #     headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+                    #     ).json()
 
                     for g in gamepost['userGames']:
+                        
                         if g['matchingMode'] ==2:
                             continue
 
@@ -204,34 +269,43 @@ def getusernum(request,nickname):
                             )
 
                         except:
-                                time.sleep(1)
-                                anotheruser = requests.get(
-                                    f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
-                                    headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
-                                ).json()['userStats'][0]
+                            time.sleep(0.02)
+                            anotheruser = requests.get(
+                                f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
+                                headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
+                            ).json()
 
-                                temt = Gameuser.objects.create(
-                                    userNum = anotheruser['userNum'],
-                                    mmr = anotheruser['mmr'],
-                                    nickname = anotheruser['nickname'],
-                                    rank = anotheruser['rank'],
-                                    totalGames = anotheruser['totalGames'],
-                                    winrate = round((anotheruser['totalWins']*100 / anotheruser['totalGames']),1),
-                                    averageKills = anotheruser['averageKills'],
-                                )
-                                gameid = Record.objects.create(
-                                    gamenumber = game['gameId'],
-                                    user = temt,
-                                    character = g['characterNum'],
-                                    beforemmr = g['mmrBefore'],
-                                    aftermmr = g['mmrAfter'],
-                                    gamerank = g['gameRank'],
-                                    playerkill = g['playerKill'],
-                                    playerAss = g['playerAssistant'],
-                                    mosterkill = g['monsterKill'],
-                                    startDtm = g['startDtm'],
-                                    mmrGain = g['mmrGain']
-                                )
+                            # while 'userStats' not in anotheruser:
+                            #     print(anotheruser)
+                            #     anotheruser = requests.get(
+                            #     f'https://open-api.bser.io/v1/user/stats/{g["userNum"]}/19',
+                            #     headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}).json()
+                            #     print(anotheruser)
+
+                            anotheruser = anotheruser['userStats'][0]
+
+                            temt = Gameuser.objects.create(
+                                userNum = anotheruser['userNum'],
+                                mmr = anotheruser['mmr'],
+                                nickname = anotheruser['nickname'],
+                                rank = anotheruser['rank'],
+                                totalGames = anotheruser['totalGames'],
+                                winrate = round((anotheruser['totalWins']*100 / anotheruser['totalGames']),1),
+                                averageKills = anotheruser['averageKills'],
+                            )
+                            gameid = Record.objects.create(
+                                gamenumber = game['gameId'],
+                                user = temt,
+                                character = g['characterNum'],
+                                beforemmr = g['mmrBefore'],
+                                aftermmr = g['mmrAfter'],
+                                gamerank = g['gameRank'],
+                                playerkill = g['playerKill'],
+                                playerAss = g['playerAssistant'],
+                                mosterkill = g['monsterKill'],
+                                startDtm = g['startDtm'],
+                                mmrGain = g['mmrGain']
+                            )
 
             # 7일이 넘은 기록부터는 가져오지 않음
             if days_check:
@@ -242,6 +316,10 @@ def getusernum(request,nickname):
             else:
                 break
 
+    edtime = time.time()
+    print(f"{edtime - sttime:.5f} sec")
+    search_user.updatedate = now_time
+    search_user.save()
 
     return HttpResponse('dtd')
 
@@ -260,8 +338,8 @@ class RecordView(ModelViewSet):
     pagination_class = RecordPage
 
     def get_queryset(self, *args,**kwargs):
-        
-        # getusernum(self.kwargs.get('nickname'))
+
+        getusernum(self.kwargs.get('nickname'))
 
         print(self.kwargs.get('nickname'))
         usnum = Gameuser.objects.get(nickname = self.kwargs.get('nickname'))
@@ -273,38 +351,6 @@ class RecordView(ModelViewSet):
     serializer_class = RecordSerializer
 
 
-
-
-
-
-def refreshuser(request,nickname):
-
-    userNum = requests.get(
-        f'https://open-api.bser.io/v1/user/nickname?query={nickname}',
-        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
-    )
-    test_json = userNum.json()
-    userNum = test_json['user']['userNum']
-    
-    print(userNum) # 유저 닉네임으로 유저 정보 받아옴
-
-    userstats = requests.get(
-        f'https://open-api.bser.io/v1/user/stats/{userNum}/19',
-        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
-    ).json()['userStats'][0]
-    print(userstats)
-
-    te = Gameuser.objects.filter(userNum = userstats['userNum']).update(
-        mmr = userstats['mmr'],
-        rank = userstats['rank'],
-        totalGames = userstats['totalGames'],
-        winrate = round((userstats['totalWins']*100 / userstats['totalGames']),1),
-        averageKills = userstats['averageKills'],
-    )
-
-    return HttpResponse('dtd')
-
-
 class UserDetailView(ModelViewSet):
 
     queryset = Gameuser.objects.all()
@@ -312,11 +358,10 @@ class UserDetailView(ModelViewSet):
     lookup_field = 'nickname'
 
 
-
 def recentgainrp(request,nickname):
     
     ch_dict = defaultdict(int)
-    ch_list = []
+    
     userid = Gameuser.objects.get(nickname = nickname)
     userrecord = Record.objects.filter(user = userid, startDtm__range=[date.today()-timedelta(days=14),date.today()])
 

@@ -6,11 +6,10 @@ app_name = "gamerecord"
 
 urlpatterns = [
     path("rererererer/", RecordView.as_view({'post':'create'})),
-    path("getusernum/<str:nickname>/", getusernum),
+    # path("getusernum/<str:nickname>/", getusernum),
     path("getsearch/<str:nickname>/", RecordView.as_view({'get':'list'})),
     path("getdetail/<str:nickname>/", UserDetailView.as_view({'get':'retrieve'})),
     path("getdetail/", UserDetailView.as_view({'get':'list'})),
     path("recentgainrp/<str:nickname>/", recentgainrp),
-    path("refresh/<str:nickname>/", refreshuser),
-
+    # path("refresh/<str:nickname>/", refreshuser),
 ]

@@ -14,14 +14,14 @@ class CharacterView(ModelViewSet):
     queryset = Character.objects.all().order_by('id')
     serializer_class = CharacterSerializers
 
-# MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa
+# alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU
 
 
 def Characterload(request):
 
     test = requests.get(
         'https://open-api.bser.io/v1/data/Character',
-        headers={'x-api-key':'MjckFi8vOaRRaueHKTRZ19X6ewJYfVf1WEkzTMZa'}
+        headers={'x-api-key':'alo3AXT2HC1SEa9MaVKOc10lHQ8LvYHr2SKf8zGU'}
     )
     test_json = test.json()
     chlist = test_json['data']

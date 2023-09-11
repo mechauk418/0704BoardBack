@@ -12,6 +12,7 @@ from rest_framework.pagination import PageNumberPagination
 from collections import defaultdict
 from character.models import Character
 from django.utils import timezone
+import json
 
 
 # 현재 한국 시간 aware 설정
@@ -42,7 +43,7 @@ def refreshuser(nickname):
     te.averageKills = userstats['averageKills']
     te.save()
 
-    return HttpResponse('refresh')
+    return JsonResponse(test_json)
 
 def getusernum(nickname):
     sttime = time.time()
@@ -321,7 +322,7 @@ def getusernum(nickname):
     search_user.updatedate = now_time
     search_user.save()
 
-    return HttpResponse('dtd')
+    return JsonResponse(test_json)
 
 
 def getuserRecord(request):
@@ -339,14 +340,23 @@ class RecordView(ModelViewSet):
 
     def get_queryset(self, *args,**kwargs):
 
-        getusernum(self.kwargs.get('nickname'))
-
         print(self.kwargs.get('nickname'))
-        usnum = Gameuser.objects.get(nickname = self.kwargs.get('nickname'))
+        try:
+            usnum = Gameuser.objects.get(nickname = self.kwargs.get('nickname'))
+            # getusernum(self.kwargs.get('nickname'))
+        except:
+            getusernum(self.kwargs.get('nickname'))
+            usnum = Gameuser.objects.get(nickname = self.kwargs.get('nickname'))
 
         qs = Record.objects.filter(user=usnum).order_by('-gamenumber')
 
         return qs
+    
+    def create(self, request, *args, **kwargs):
+        getusernum(self.kwargs.get('nickname'))
+
+        return
+        
 
     serializer_class = RecordSerializer
 
@@ -360,16 +370,38 @@ class UserDetailView(ModelViewSet):
 
 def recentgainrp(request,nickname):
     
-    ch_dict = defaultdict(int)
+    alldict = dict()
     
+    ch_dict = defaultdict(int)
+    ch2_dict = defaultdict(int)
+
     userid = Gameuser.objects.get(nickname = nickname)
     userrecord = Record.objects.filter(user = userid, startDtm__range=[date.today()-timedelta(days=14),date.today()])
 
     for g in userrecord:
-        chname = Character.objects.get(id=g.character).name
+        chname = Character.objects.get(id=g.character).koreanname
         ch_dict[chname]+=g.mmrGain
+        ch2_dict[chname]+=1
 
-    print(ch_dict)
+    ch2_item = list(ch2_dict.items())
+    ch2_item.sort(key=lambda x:(-x[1]))
 
-    return JsonResponse(ch_dict)
+    print(ch2_item)
+    result_list = []
 
+    for item in ch2_item:
+        temtdict = dict()
+        temtdict['chname']=item[0]
+        temtdict['trygame']=item[1]
+        temtdict['mmrGain']=ch_dict[item[0]]
+        result_list.append(temtdict)
+        
+    alldict['result'] = result_list
+    print(alldict)
+
+    return JsonResponse(alldict)
+
+
+def testrp(request,nickname):
+
+    return getusernum(nickname)

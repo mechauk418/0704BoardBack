@@ -3,7 +3,6 @@ from .models import *
 from rest_framework import serializers
 from character.models import Character
 
-
 class GameDetailSerializer(serializers.ModelSerializer):
 
 
@@ -28,6 +27,21 @@ class GameDetailSerializer(serializers.ModelSerializer):
 
 
 class GameuserSerializer(serializers.ModelSerializer):
+
+    averageDamage = serializers.SerializerMethodField()
+
+    def get_averageDamage(self,obj):
+
+        games = Record.objects.filter(user = obj)
+        sumDamage = 0
+        for game in games:
+            sumDamage += game.damageToPlayer
+
+        avgD = int(sumDamage/len(games))
+
+        
+        return avgD
+
 
     class Meta:
         model = Gameuser

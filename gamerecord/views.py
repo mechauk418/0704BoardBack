@@ -45,6 +45,7 @@ def refreshuser(nickname):
 
     return JsonResponse(test_json)
 
+
 def getusernum(nickname):
     sttime = time.time()
     # 유저 닉네임으로 유저 정보 받아옴
@@ -145,7 +146,12 @@ def getusernum(nickname):
                         playerAss = g['playerAssistant'],
                         mosterkill = g['monsterKill'],
                         startDtm = g['startDtm'],
-                        mmrGain = g['mmrGain']
+                        mmrGain = g['mmrGain'],
+                        damageToPlayer = g['damageToPlayer'],
+                        damageToMonster  = g['damageToMonster'],
+                        premaid  = g['preMade'],
+                        useWard  = g['addSurveillanceCamera']+g['addTelephotoCamera'],
+                        useConsole = g['useSecurityConsole'],
                     )
 
                 except:
@@ -183,7 +189,12 @@ def getusernum(nickname):
                         playerAss = g['playerAssistant'],
                         mosterkill = g['monsterKill'],
                         startDtm = g['startDtm'],
-                        mmrGain = g['mmrGain']
+                        mmrGain = g['mmrGain'],
+                        damageToPlayer = g['damageToPlayer'],
+                        damageToMonster  = g['damageToMonster'],
+                        premaid  = g['preMade'],
+                        useWard  = g['addSurveillanceCamera']+g['addTelephotoCamera'],
+                        useConsole = g['useSecurityConsole'],
                     )
 
 
@@ -266,7 +277,12 @@ def getusernum(nickname):
                                 playerAss = g['playerAssistant'],
                                 mosterkill = g['monsterKill'],
                                 startDtm = g['startDtm'],
-                                mmrGain = g['mmrGain']
+                                mmrGain = g['mmrGain'],
+                                damageToPlayer = g['damageToPlayer'],
+                                damageToMonster  = g['damageToMonster'],
+                                premaid  = g['preMade'],
+                                useWard  = g['addSurveillanceCamera']+g['addTelephotoCamera'],
+                                useConsole = g['useSecurityConsole'],
                             )
 
                         except:
@@ -305,7 +321,12 @@ def getusernum(nickname):
                                 playerAss = g['playerAssistant'],
                                 mosterkill = g['monsterKill'],
                                 startDtm = g['startDtm'],
-                                mmrGain = g['mmrGain']
+                                mmrGain = g['mmrGain'],
+                                damageToPlayer = g['damageToPlayer'],
+                                damageToMonster  = g['damageToMonster'],
+                                premaid  = g['preMade'],
+                                useWard  = g['addSurveillanceCamera']+g['addTelephotoCamera'],
+                                useConsole = g['useSecurityConsole'],
                             )
 
             # 7일이 넘은 기록부터는 가져오지 않음

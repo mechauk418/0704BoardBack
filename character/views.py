@@ -47,3 +47,13 @@ def Characterload(request):
 
 
     return HttpResponse(chlist)
+
+
+
+
+class CharacterRPView(ModelViewSet):
+
+    pagination_class = None
+
+    queryset = Character.objects.all().order_by('trygame7days')
+    serializer_class = CharacterRPSerializers

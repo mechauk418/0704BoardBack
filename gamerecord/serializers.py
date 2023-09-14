@@ -76,3 +76,28 @@ class RecordSerializer(serializers.ModelSerializer):
         model = Record
         fields = '__all__'
 
+
+class UserUseSerializer(serializers.ModelSerializer):
+
+    usech = serializers.SerializerMethodField()
+
+    def get_usech(self,obj):
+        userlist = []
+        checklist = [] # 중복 체크
+        qs = Record.objects.filter(user = obj).order_by('character')
+        for i in qs:
+            temt = Character.objects.get(id=i.character)
+            if temt.pk not in checklist:
+                checklist.append(temt.pk)
+                userlist.append( {'chname': temt.koreanname, 'chnumber':temt.pk} )
+
+            else:
+                continue
+
+                
+
+        return userlist
+
+    class Meta:
+        model = Gameuser
+        fields = ['usech']

@@ -41,3 +41,11 @@ class Record(models.Model):
     useConsole = models.IntegerField(blank=True, default=0) # 콘솔 작동 횟수
     
 
+
+# skillOrderInfo = 스킬 레벨업 순서
+
+# escapeState = 1이면 탈출 실패, 2이면 전투 패배, 3이면 탈출
+
+# tacticalSkillGroup = 최종 전술 스킬 종류
+
+# tacticalSkillLevel = 최종 전술 스킬 레벨

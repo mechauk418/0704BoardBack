@@ -16,5 +16,6 @@ class Character(models.Model):
     atkspeed = models.DecimalField(max_digits=6, decimal_places=3)
     speed = models.DecimalField(max_digits=6, decimal_places=3)
     koreanname = models.CharField(max_length=80, blank=True)
-
-# s = Character.objects.create(name='AbiGail', attack = 30, hp = 800, hpregen = 1.5, stamina = 500, defense = 30, atkspeed=1.5, speed=3.5, stregen = 1.5)
+    RPfor7days = models.IntegerField(blank=True, default=0)
+    RPeff = models.DecimalField(max_digits=6, decimal_places=2, blank=True, default=0)
+    trygame7days = models.IntegerField(blank=True, default=0)

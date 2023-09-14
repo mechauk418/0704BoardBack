@@ -10,3 +10,8 @@ class CharacterSerializers(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CharacterRPSerializers(serializers.ModelSerializer):
+
+    class Meta:
+        model = Character
+        fields = ['koreanname','trygame7days','RPfor7days' , 'RPeff',  ]
